@@ -2,6 +2,7 @@ from importlib import import_module
 
 from flask import Flask
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
@@ -15,6 +16,8 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 CORS(app)
+
+jwt = JWTManager(app)
 
 
 def register_subpackages():
