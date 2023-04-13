@@ -5,10 +5,15 @@ from marshmallow import ValidationError, fields, validates
 from .base import BaseSchema
 
 
-class UserSignupSchema(BaseSchema):
+class PlainUserSchema(BaseSchema):
+    id = fields.Integer(dump_only=True)
     email = fields.Email(required=True)
-    password = fields.Str(required=True)
+    password = fields.Str(required=True, load_only=True)
+    created_at = fields.DateTime(dump_only=True)
+    updated_at = fields.DateTime(dump_only=True)
 
+
+class UserSignupSchema(PlainUserSchema):
     @validates("email")
     def validate_email(self, data, **kwargs):
         if len(data) > 255:
@@ -28,8 +33,3 @@ class UserSignupSchema(BaseSchema):
                 "Passwords must include at least one lowercase letter, "
                 "one uppercase letter, one digit"
             )
-
-
-class UserLoginSchema(BaseSchema):
-    email = fields.Str(required=True)
-    password = fields.Str(required=True)

@@ -1,5 +1,5 @@
 from flask import request
-from flask_jwt_extended import create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from sqlalchemy.exc import IntegrityError
 
 from main import app, db
@@ -7,7 +7,7 @@ from main.commons.decorators import validate_body
 from main.commons.exceptions import BadRequest, Unauthorized
 from main.commons.utils import check_password, hash_password
 from main.models.user import UserModel
-from main.schemas.user import UserLoginSchema, UserSignupSchema
+from main.schemas.user import PlainUserSchema, UserSignupSchema
 
 
 @app.post("/users/signup")
@@ -21,13 +21,12 @@ def signup():
         db.session.commit()
     except IntegrityError:
         raise BadRequest(error_message="Email already existed")
-    user_dict = user.to_dict()
-    del user_dict["hashed_password"]
-    return user_dict
+    access_token = create_access_token(identity=user.id, fresh=True)
+    return {"token": access_token, "user": PlainUserSchema().dump(user)}
 
 
 @app.post("/users/login")
-@validate_body(UserLoginSchema)
+@validate_body(PlainUserSchema)
 def login():
     request_data = request.get_json()
     user: UserModel = UserModel.query.filter(
@@ -38,14 +37,13 @@ def login():
         raise Unauthorized(error_message="Email or password is incorrect")
 
     access_token = create_access_token(identity=user.id, fresh=True)
-    user_dict = user.to_dict()
-    del user_dict["hashed_password"]
-    return {"token": access_token, "user": user_dict}
+    return {"token": access_token, "user": PlainUserSchema().dump(user)}
 
 
 # test auth
-@app.get("/users/<int:user_id>")
+@app.get("/users/me")
 @jwt_required()
-def getUser(user_id):
-    user = UserModel.query.get_or_404(int(user_id))
-    return user.to_dict()
+def get_user():
+    current_user_id = get_jwt_identity()
+    user = UserModel.query.get_or_404(int(current_user_id))
+    return PlainUserSchema().dump(user)
