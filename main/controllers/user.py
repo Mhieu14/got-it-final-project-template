@@ -10,7 +10,7 @@ from main.models.user import UserModel
 from main.schemas.user import UserLoginSchema, UserSignupSchema
 
 
-@app.post("/user/signup")
+@app.post("/users/signup")
 @validate_body(UserSignupSchema)
 def signup():
     request_data = request.get_json()
@@ -26,7 +26,7 @@ def signup():
     return user_dict
 
 
-@app.post("/user/login")
+@app.post("/users/login")
 @validate_body(UserLoginSchema)
 def login():
     request_data = request.get_json()
@@ -44,7 +44,7 @@ def login():
 
 
 # test auth
-@app.get("/user/<int:user_id>")
+@app.get("/users/<int:user_id>")
 @jwt_required()
 def getUser(user_id):
     user = UserModel.query.get_or_404(int(user_id))

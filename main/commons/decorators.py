@@ -1,7 +1,7 @@
 from flask import request
 from marshmallow import ValidationError
 
-from main.commons.exceptions import BadRequest
+from main.commons.exceptions import BadRequest, _ErrorCode
 
 
 def validate_body(schema):
@@ -11,8 +11,9 @@ def validate_body(schema):
             try:
                 schema().load(request_data)
             except ValidationError as err:
-                # return BadRequest(error_message=err.messages).to_response()
-                raise BadRequest(error_message=err.messages)
+                raise BadRequest(
+                    error_message=err.messages, error_code=_ErrorCode.VALIDATION_ERROR
+                )
             return func(*args, **kwargs)
 
         wrapper.__name__ = func.__name__

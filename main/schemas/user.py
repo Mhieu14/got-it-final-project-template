@@ -25,8 +25,8 @@ class UserSignupSchema(BaseSchema):
         pattern = re.compile("(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])")
         if not pattern.match(data):
             raise ValidationError(
-                """Passwords must include at least one lowercase letter,
-                one uppercase letter, one digit"""
+                "Passwords must include at least one lowercase letter, "
+                "one uppercase letter, one digit"
             )
 
 
