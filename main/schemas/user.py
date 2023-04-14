@@ -1,6 +1,6 @@
 import re
 
-from marshmallow import ValidationError, fields, validates
+from marshmallow import ValidationError, fields, post_load, validates
 
 from .base import BaseSchema
 
@@ -11,6 +11,11 @@ class PlainUserSchema(BaseSchema):
     password = fields.Str(required=True, load_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
+
+    @post_load
+    def post_load_user(self, item, many, **kwargs):
+        item["email"] = item["email"].lower().strip()
+        return item
 
 
 class UserSignupSchema(PlainUserSchema):

@@ -1,5 +1,5 @@
 from flask import request
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token
 from sqlalchemy.exc import IntegrityError
 
 from main import app, db
@@ -38,12 +38,3 @@ def login():
 
     access_token = create_access_token(identity=user.id, fresh=True)
     return {"token": access_token, "user": PlainUserSchema().dump(user)}
-
-
-# test auth
-@app.get("/users/me")
-@jwt_required()
-def get_user():
-    current_user_id = get_jwt_identity()
-    user = UserModel.query.get_or_404(int(current_user_id))
-    return PlainUserSchema().dump(user)

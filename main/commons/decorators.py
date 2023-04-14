@@ -7,7 +7,13 @@ from main.commons.exceptions import BadRequest, _ErrorCode
 def validate_body(schema):
     def validate(func):
         def wrapper(*args, **kwargs):
-            request_data = request.get_json()
+            try:
+                request_data = request.get_json()
+            except Exception:
+                raise BadRequest(
+                    error_message="request body is empty",
+                    error_code=_ErrorCode.VALIDATION_ERROR,
+                )
             try:
                 schema().load(request_data)
             except ValidationError as err:
