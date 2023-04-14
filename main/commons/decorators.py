@@ -9,16 +9,15 @@ def validate_body(schema):
         def wrapper(*args, **kwargs):
             try:
                 request_data = request.get_json()
-            except Exception:
-                raise BadRequest(
-                    error_message="request body is empty",
-                    error_code=_ErrorCode.VALIDATION_ERROR,
-                )
-            try:
                 schema().load(request_data)
             except ValidationError as err:
                 raise BadRequest(
                     error_message=err.messages, error_code=_ErrorCode.VALIDATION_ERROR
+                )
+            except Exception:
+                raise BadRequest(
+                    error_message="Invalid request body",
+                    error_code=_ErrorCode.VALIDATION_ERROR,
                 )
             return func(*args, **kwargs)
 
