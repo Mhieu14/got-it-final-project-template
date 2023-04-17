@@ -16,7 +16,7 @@ def get_pagination_params(request_args, default_limit=20, default_offset=0):
         offset = int(request_args.get("offset", default_offset))
         limit = int(request_args.get("limit", default_limit))
         if offset < 0 or limit < 0:
-            raise Exception("Limit and offset must bigger than 0")
+            raise Exception("Limit and offset must be bigger than 0")
         return offset, limit
     except Exception as e:
         message = str(e) or "Invalid parameters"

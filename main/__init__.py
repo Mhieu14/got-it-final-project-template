@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from ._config import config
 from .commons.error_handlers import register_error_handlers
+from .commons.exceptions import Unauthorized
 
 app = Flask(__name__)
 app.config.from_object(config)
@@ -18,6 +19,11 @@ migrate = Migrate(app, db)
 CORS(app)
 
 jwt = JWTManager(app)
+
+
+@jwt.invalid_token_loader
+def invalid_token_callback(message):
+    return Unauthorized(error_message=f"Invalid token: {message}").to_response()
 
 
 def register_subpackages():

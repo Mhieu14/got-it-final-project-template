@@ -8,8 +8,8 @@ class PlainCategorySchema(BaseSchema):
     user_id = fields.Integer(dump_only=True)
     name = fields.Str(required=True)
     description = fields.Str(required=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
+    # created_at = fields.DateTime(dump_only=True)
+    # updated_at = fields.DateTime(dump_only=True)
 
     @post_load
     def post_load_category(self, cate, many, **kwargs):

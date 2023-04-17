@@ -121,7 +121,7 @@ def test_get_list_category_invalid_params(client):
     assert response.status_code == 400
     assert response.json["error_code"] == 400001
 
-    response = client.get("/categories?offset=a", headers=headers)
+    response = client.get("/categories?offset=-1", headers=headers)
     assert response.status_code == 400
     assert response.json["error_code"] == 400001
 

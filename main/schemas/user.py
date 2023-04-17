@@ -9,8 +9,8 @@ class PlainUserSchema(BaseSchema):
     id = fields.Integer(dump_only=True)
     email = fields.Email(required=True)
     password = fields.Str(required=True, load_only=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
+    # created_at = fields.DateTime(dump_only=True)
+    # updated_at = fields.DateTime(dump_only=True)
 
     @post_load
     def post_load_user(self, item, many, **kwargs):
