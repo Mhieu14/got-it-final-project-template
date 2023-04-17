@@ -33,6 +33,7 @@ def create_item(category_id):
 @jwt_required()
 def get_list_items(category_id):
     offset, limit = get_pagination_params(request_args=request.args)
+    CategoryModel.query.get_or_404(category_id)
     query = ItemModel.query.filter(ItemModel.category_id == int(category_id))
     items = (
         query.with_entities(

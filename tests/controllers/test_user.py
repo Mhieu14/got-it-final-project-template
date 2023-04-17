@@ -100,11 +100,3 @@ def test_login_fail(client):
         "/users/login", json={"email": default_email, "password": "wrongA1"}
     )
     assert response.status_code == 401
-
-
-# def test_sign_up_email_exist(client, session):
-#     init_user(session, number_of_user=2)
-#     request_body = {"email": "email1@email.com", "password": "passwordA1"}
-#     response = client.post("/users/signup", json=request_body)
-#     assert response.status_code == 400
-#     assert response.json["error_code"] == 400000
