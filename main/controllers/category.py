@@ -36,8 +36,6 @@ def get_list_categories():
             CategoryModel.id,
             CategoryModel.name,
             CategoryModel.user_id,
-            # CategoryModel.created_at,
-            # CategoryModel.updated_at,
         )
         .all()
     )

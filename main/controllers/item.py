@@ -41,8 +41,6 @@ def get_list_items(category_id):
             ItemModel.name,
             ItemModel.user_id,
             ItemModel.category_id,
-            # ItemModel.created_at,
-            # ItemModel.updated_at,
         )
         .limit(limit)
         .offset(offset)
