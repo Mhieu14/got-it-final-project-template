@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from flask import request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.exc import IntegrityError
@@ -91,7 +89,7 @@ def update_item(category_id, item_id):
         raise Forbidden(error_message="User has no right to delete this item")
     item.name = request_data["name"]
     item.description = request_data["description"]
-    item.updated_at = datetime.now()
+    # item.updated_at = db.func.now()
     try:
         db.session.add(item)
         db.session.commit()
