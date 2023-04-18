@@ -7,9 +7,9 @@ from main.models.item import ItemModel
 from main.models.user import UserModel
 
 
-def init_users(number_of_user=2):
+def create_users(number_of_users):
     users = []
-    for i in range(number_of_user):
+    for i in range(number_of_users):
         email = f"email{i}@email.com"
         password = "passwordA1"
         hashed_password = hash_password(password)
@@ -20,14 +20,18 @@ def init_users(number_of_user=2):
     return users
 
 
+def create_user():
+    return create_users(number_of_users=1)[0]
+
+
 def generate_auth_headers(user_id):
     token = create_access_token(identity=user_id, fresh=True)
     return {"Authorization": f"Bearer {token}"}
 
 
-def init_category(user_id, number_of_cate=10):
+def create_categories(user_id, number_of_categories):
     categories = []
-    for i in range(number_of_cate):
+    for i in range(number_of_categories):
         cate = CategoryModel(
             name=f"cate{i}",
             description="Description",
@@ -39,9 +43,13 @@ def init_category(user_id, number_of_cate=10):
     return categories
 
 
-def init_item(user_id, category_id, number_of_item=10):
+def create_category(user_id):
+    return create_categories(user_id=user_id, number_of_categories=1)[0]
+
+
+def create_items(user_id, category_id, number_of_items):
     items = []
-    for i in range(number_of_item):
+    for i in range(number_of_items):
         cate = ItemModel(
             name=f"item{i}",
             description="Description",
@@ -52,6 +60,10 @@ def init_item(user_id, category_id, number_of_item=10):
         items.append(cate)
     db.session.commit()
     return items
+
+
+def create_item(user_id, category_id):
+    return create_items(user_id=user_id, category_id=category_id, number_of_items=1)[0]
 
 
 def count_items_in_category(category_id):

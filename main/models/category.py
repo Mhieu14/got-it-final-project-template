@@ -1,4 +1,5 @@
 from main import db
+from main.constants import DESCRIPTION_MAX_LENGTH, NAME_MAX_LENGTH
 
 from .base import BaseModel
 
@@ -6,8 +7,8 @@ from .base import BaseModel
 class CategoryModel(BaseModel):
     __tablename__ = "categories"
 
-    name = db.Column(db.String(255), unique=True, nullable=False)
-    description = db.Column(db.String(5000), nullable=False)
+    name = db.Column(db.String(NAME_MAX_LENGTH), unique=True, nullable=False)
+    description = db.Column(db.String(DESCRIPTION_MAX_LENGTH), nullable=False)
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),

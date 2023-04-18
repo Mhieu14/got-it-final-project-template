@@ -1,3 +1,8 @@
+import pytest
+
+from main.commons.exceptions import BadRequest, ValidationError
+from main.constants import EMAIL_MAX_LENGTH
+
 default_email = "email0@email.com"
 default_password = "passwordA1"
 
@@ -14,46 +19,27 @@ def test_signup_success(client):
     assert response.json["user"]["email"] == email
 
 
-def test_signup_invalid_body(client):
+@pytest.mark.parametrize(
+    "request_body",
+    [
+        None,
+        {},
+        {"email": default_email},
+        {"password": default_password},
+        {"email": "email", "password": default_password},
+        {"email": default_email, "password": "invalid_password"},
+        {
+            "email": "a" * (EMAIL_MAX_LENGTH + 1) + "@email.com",
+            "password": default_password,
+        },
+        {"email": default_email, "password": "shoR1"},
+    ],
+)
+def test_signup_invalid_body(client, request_body):
     # missing password
-    response = client.post("/users/signup", json={"email": default_email})
+    response = client.post("/users/signup", json=request_body)
     assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # missing email
-    response = client.post("/users/signup", json={"password": default_password})
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # email invalid format
-    response = client.post(
-        "/users/signup", json={"email": "email", "password": default_password}
-    )
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # email too long
-    very_long_text = "".join("a" for i in range(255))
-    response = client.post(
-        "/users/signup",
-        json={"email": f"{very_long_text}@email.com", "password": default_password},
-    )
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # password too short
-    response = client.post(
-        "/users/signup", json={"email": default_email, "password": "shoR1"}
-    )
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # password invalid format
-    response = client.post(
-        "/users/signup", json={"email": default_email, "password": "invalidpassword"}
-    )
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
+    assert response.json["error_code"] == ValidationError.error_code
 
 
 def test_signup_email_existed(client):
@@ -61,7 +47,7 @@ def test_signup_email_existed(client):
     client.post("/users/signup", json=request_body)
     response = client.post("/users/signup", json=request_body)
     assert response.status_code == 400
-    assert response.json["error_code"] == 400000
+    assert response.json["error_code"] == BadRequest.error_code
 
 
 def test_login_success(client):
@@ -82,12 +68,12 @@ def test_login_fail(client):
     # missing email
     response = client.post("/users/login", json={"password": default_password})
     assert response.status_code == 400
-    assert response.json["error_code"] == 400001
+    assert response.json["error_code"] == ValidationError.error_code
 
     # missing password
     response = client.post("/users/login", json={"email": default_email})
     assert response.status_code == 400
-    assert response.json["error_code"] == 400001
+    assert response.json["error_code"] == ValidationError.error_code
 
     # wrong email
     response = client.post(

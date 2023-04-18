@@ -1,8 +1,20 @@
+import pytest
+
+from main.commons.exceptions import BadRequest, Forbidden, NotFound, ValidationError
+from main.constants import (
+    DESCRIPTION_MAX_LENGTH,
+    LIMIT_DEFAULT,
+    NAME_MAX_LENGTH,
+    OFFSET_DEFAULT,
+)
 from tests.utils.init_data import (
+    create_categories,
+    create_category,
+    create_item,
+    create_items,
+    create_user,
+    create_users,
     generate_auth_headers,
-    init_category,
-    init_item,
-    init_users,
 )
 
 default_name = "item default_name"
@@ -10,8 +22,8 @@ default_description = "item default_description"
 
 
 def test_create_item_success(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
+    user = create_user()
+    category = create_category(user_id=user.id)
     headers = generate_auth_headers(user.id)
     request_body = {"name": default_name, "description": default_description}
     response = client.post(
@@ -25,67 +37,43 @@ def test_create_item_success(client):
     assert response.json["user_id"] == user.id
 
 
-def test_create_item_notfound_category(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
+def test_create_item_not_found_category(client):
+    user = create_user()
+    category = create_category(user_id=user.id)
     headers = generate_auth_headers(user.id)
     request_body = {"name": default_name, "description": default_description}
     response = client.post(
         f"/categories/{category.id + 1}/items", json=request_body, headers=headers
     )
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
 
-def test_create_item_invalid_body(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
+@pytest.mark.parametrize(
+    "request_body",
+    [
+        None,
+        {},
+        {"name": default_name},
+        {"description": default_description},
+        {"name": "a" * (NAME_MAX_LENGTH + 1), "description": default_description},
+        {"name": default_name, "description": "a" * (DESCRIPTION_MAX_LENGTH + 1)},
+    ],
+)
+def test_create_item_invalid_body(client, request_body):
+    user = create_user()
+    category = create_category(user_id=user.id)
     headers = generate_auth_headers(user.id)
-    # missing req body
-    response = client.post(f"/categories/{category.id}/items", headers=headers)
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # missing name
     response = client.post(
-        f"/categories/{category.id}/items", json={"name": default_name}, headers=headers
+        f"/categories/{category.id}/items", headers=headers, json=request_body
     )
     assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # missing description
-    response = client.post(
-        f"/categories/{category.id}/items",
-        headers=headers,
-        json={"description": default_description},
-    )
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # name too long
-    very_long_name = "".join("a" for i in range(256))
-    response = client.post(
-        f"/categories/{category.id}/items",
-        headers=headers,
-        json={"name": very_long_name, "description": default_description},
-    )
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
-
-    # description too long
-    very_long_des = "".join("a" for i in range(5001))
-    response = client.post(
-        f"/categories/{category.id}/items",
-        headers=headers,
-        json={"name": default_name, "description": very_long_des},
-    )
-    assert response.status_code == 400
-    assert response.json["error_code"] == 400001
+    assert response.json["error_code"] == ValidationError.error_code
 
 
 def test_create_item_duplicate_name(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
+    user = create_user()
+    category = create_category(user_id=user.id)
     headers = generate_auth_headers(user.id)
     client.post(
         f"/categories/{category.id}/items",
@@ -98,13 +86,16 @@ def test_create_item_duplicate_name(client):
         headers=headers,
     )
     assert response.status_code == 400
-    assert response.json["error_code"] == 400000
+    assert response.json["error_code"] == BadRequest.error_code
 
 
 def test_get_list_item_success(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    init_item(user_id=user.id, category_id=category.id, number_of_item=30)
+    user = create_user()
+    category = create_category(user_id=user.id)
+    number_of_items = 30
+    create_items(
+        user_id=user.id, category_id=category.id, number_of_items=number_of_items
+    )
     headers = generate_auth_headers(user.id)
 
     response = client.get(f"/categories/{category.id}/items", headers=headers)
@@ -116,39 +107,47 @@ def test_get_list_item_success(client):
     assert "name" in first_item
     assert "description" not in first_item
     assert "user_id" in first_item
-    assert len(response.json["items"]) == 20
-    assert response.json["pagination"]["total"] == 30
-    assert response.json["pagination"]["offset"] == 0
-    assert response.json["pagination"]["limit"] == 20
+    assert len(response.json["items"]) == LIMIT_DEFAULT
+    assert response.json["pagination"]["total"] == number_of_items
+    assert response.json["pagination"]["offset"] == OFFSET_DEFAULT
+    assert response.json["pagination"]["limit"] == LIMIT_DEFAULT
 
-    response = client.get(f"/categories/{category.id}/items?offset=20", headers=headers)
-    assert len(response.json["items"]) == 10
-    assert response.json["pagination"]["total"] == 30
+    response = client.get(
+        f"/categories/{category.id}/items",
+        query_string={"offset": 20},
+        headers=headers,
+    )
+    assert len(response.json["items"]) == number_of_items - 20
+    assert response.json["pagination"]["total"] == number_of_items
     assert response.json["pagination"]["offset"] == 20
-    assert response.json["pagination"]["limit"] == 20
+    assert response.json["pagination"]["limit"] == LIMIT_DEFAULT
 
-    response = client.get(f"/categories/{category.id}/items?limit=10", headers=headers)
+    response = client.get(
+        f"/categories/{category.id}/items",
+        query_string={"limit": 10},
+        headers=headers,
+    )
     assert len(response.json["items"]) == 10
-    assert response.json["pagination"]["total"] == 30
-    assert response.json["pagination"]["offset"] == 0
+    assert response.json["pagination"]["total"] == number_of_items
+    assert response.json["pagination"]["offset"] == OFFSET_DEFAULT
     assert response.json["pagination"]["limit"] == 10
 
 
 def test_get_list_item_not_found_category(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    init_item(user_id=user.id, category_id=category.id, number_of_item=10)
+    user = create_user()
+    category = create_category(user_id=user.id)
+    create_items(user_id=user.id, category_id=category.id, number_of_items=10)
     headers = generate_auth_headers(user.id)
 
     response = client.get(f"/categories/{category.id + 1}/items", headers=headers)
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
 
 def test_get_one_item_success(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
+    user = create_user()
+    category = create_category(user_id=user.id)
+    item = create_item(user_id=user.id, category_id=category.id)
     headers = generate_auth_headers(user.id)
 
     response = client.get(f"/categories/{category.id}/items/{item.id}", headers=headers)
@@ -160,10 +159,10 @@ def test_get_one_item_success(client):
     assert response.json["category_id"] == item.category_id
 
 
-def test_get_one_item_notfound(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
+def test_get_one_item_not_found(client):
+    user = create_user()
+    category = create_category(user_id=user.id)
+    item = create_item(user_id=user.id, category_id=category.id)
     headers = generate_auth_headers(user_id=user.id)
 
     # right category, wrong item
@@ -171,20 +170,20 @@ def test_get_one_item_notfound(client):
         f"/categories/{category.id}/items/{item.id + 1}", headers=headers
     )
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
     # wrong category, right item
     response = client.get(
         f"/categories/{category.id + 1}/items/{item.id}", headers=headers
     )
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
 
 def test_delete_item_success(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
+    user = create_user()
+    category = create_category(user_id=user.id)
+    item = create_item(user_id=user.id, category_id=category.id)
     headers = generate_auth_headers(user_id=user.id)
 
     response = client.delete(
@@ -193,10 +192,10 @@ def test_delete_item_success(client):
     assert response.status_code == 200
 
 
-def test_delete_item_notfound(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
+def test_delete_item_not_found(client):
+    user = create_user()
+    category = create_category(user_id=user.id)
+    item = create_item(user_id=user.id, category_id=category.id)
     headers = generate_auth_headers(user_id=user.id)
 
     # right category, wrong item
@@ -204,37 +203,39 @@ def test_delete_item_notfound(client):
         f"/categories/{category.id}/items/{item.id + 1}", headers=headers
     )
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
     # wrong category, right item
     response = client.delete(
         f"/categories/{category.id + 1}/items/{item.id}", headers=headers
     )
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
 
 def test_delete_item_forbidden(client):
-    users = init_users(2)
+    users = create_users(2)
     user_id_create = users[0].id
     user_id_delete = users[1].id
-    category = init_category(user_id=user_id_create, number_of_cate=1)[0]
-    item = init_item(user_id=user_id_create, category_id=category.id, number_of_item=1)[
-        0
-    ]
+    category = create_categories(user_id=user_id_create, number_of_categories=1)[0]
+    item = create_items(
+        user_id=user_id_create,
+        category_id=category.id,
+        number_of_items=1,
+    )[0]
     headers = generate_auth_headers(user_id=user_id_delete)
 
     response = client.delete(
         f"/categories/{category.id}/items/{item.id}", headers=headers
     )
     assert response.status_code == 403
-    assert response.json["error_code"] == 403000
+    assert response.json["error_code"] == Forbidden.error_code
 
 
 def test_update_item_success(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
+    user = create_user()
+    category = create_category(user_id=user.id)
+    item = create_item(user_id=user.id, category_id=category.id)
     headers = generate_auth_headers(user_id=user.id)
 
     response = client.put(
@@ -250,10 +251,10 @@ def test_update_item_success(client):
     assert response.json["user_id"] == user.id
 
 
-def test_update_item_notfound(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
+def test_update_item_not_found(client):
+    user = create_user()
+    category = create_category(user_id=user.id)
+    item = create_item(user_id=user.id, category_id=category.id)
     headers = generate_auth_headers(user_id=user.id)
 
     # right category, wrong item
@@ -263,7 +264,7 @@ def test_update_item_notfound(client):
         headers=headers,
     )
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
     # wrong category, right item
     response = client.put(
@@ -272,17 +273,17 @@ def test_update_item_notfound(client):
         headers=headers,
     )
     assert response.status_code == 404
-    assert response.json["error_code"] == 404000
+    assert response.json["error_code"] == NotFound.error_code
 
 
 def test_update_item_forbidden(client):
-    users = init_users(2)
+    users = create_users(2)
     user_id_create = users[0].id
     user_id_delete = users[1].id
-    category = init_category(user_id=user_id_create, number_of_cate=1)[0]
-    item = init_item(user_id=user_id_create, category_id=category.id, number_of_item=1)[
-        0
-    ]
+    category = create_categories(user_id=user_id_create, number_of_categories=1)[0]
+    item = create_items(
+        user_id=user_id_create, category_id=category.id, number_of_items=1
+    )[0]
     headers = generate_auth_headers(user_id=user_id_delete)
 
     response = client.put(
@@ -291,13 +292,13 @@ def test_update_item_forbidden(client):
         headers=headers,
     )
     assert response.status_code == 403
-    assert response.json["error_code"] == 403000
+    assert response.json["error_code"] == Forbidden.error_code
 
 
 def test_update_item_duplicate_name(client):
-    user = init_users(1)[0]
-    category = init_category(user_id=user.id, number_of_cate=1)[0]
-    items = init_item(user_id=user.id, category_id=category.id, number_of_item=2)
+    user = create_user()
+    category = create_category(user_id=user.id)
+    items = create_items(user_id=user.id, category_id=category.id, number_of_items=2)
     headers = generate_auth_headers(user.id)
     response = client.put(
         f"/categories/{category.id}/items/{items[1].id}",
@@ -305,4 +306,4 @@ def test_update_item_duplicate_name(client):
         headers=headers,
     )
     assert response.status_code == 400
-    assert response.json["error_code"] == 400000
+    assert response.json["error_code"] == BadRequest.error_code

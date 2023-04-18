@@ -4,11 +4,11 @@ from time import sleep
 from flask_jwt_extended import create_access_token
 
 from main import app
-from tests.utils.init_data import generate_auth_headers, init_users
+from tests.utils.init_data import create_users, generate_auth_headers
 
 
 def test_wrong_secret_key(client):
-    user = init_users(number_of_user=1)[0]
+    user = create_users(number_of_users=1)[0]
     headers = generate_auth_headers(user_id=user.id)
     app.config.update(JWT_SECRET_KEY="other_secret_key")
     response = client.get("/categories", headers=headers)
@@ -21,7 +21,7 @@ def test_missing_header(client):
 
 
 def test_missing_bearer(client):
-    user = init_users(number_of_user=1)[0]
+    user = create_users(number_of_users=1)[0]
     token = create_access_token(identity=user.id, fresh=True)
     headers = {"Authorization": f"{token}"}
     response = client.get("/categories", headers=headers)
@@ -29,7 +29,7 @@ def test_missing_bearer(client):
 
 
 def test_expired_token(client):
-    user = init_users(number_of_user=1)[0]
+    user = create_users(number_of_users=1)[0]
     app.config.update(JWT_ACCESS_TOKEN_EXPIRES=timedelta(seconds=2))
     headers = generate_auth_headers(user_id=user.id)
     response = client.get("/categories", headers=headers)

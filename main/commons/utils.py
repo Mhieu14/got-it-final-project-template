@@ -1,6 +1,7 @@
 import bcrypt
 
 from main.commons.exceptions import BadRequest
+from main.constants import LIMIT_DEFAULT, LIMIT_MAX, OFFSET_DEFAULT
 
 
 def hash_password(plain_text_password):
@@ -11,13 +12,15 @@ def check_password(plain_text_password, hashed_password):
     return bcrypt.checkpw(plain_text_password.encode(), hashed_password.encode())
 
 
-def get_pagination_params(request_args, default_limit=20, default_offset=0):
+def get_pagination_params(
+    request_args, default_limit=LIMIT_DEFAULT, default_offset=OFFSET_DEFAULT
+):
     try:
         offset = int(request_args.get("offset", default_offset))
         limit = int(request_args.get("limit", default_limit))
         if offset < 0 or limit < 0:
             raise Exception("Limit and offset must be bigger than 0")
-        if limit > 50:
+        if limit > LIMIT_MAX:
             raise Exception("Limit must be smaller than 50")
         return offset, limit
     except Exception as e:
