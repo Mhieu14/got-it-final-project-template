@@ -3,7 +3,7 @@ from tests.utils.init_data import (
     generate_auth_headers,
     init_category,
     init_item,
-    init_user,
+    init_users,
 )
 
 default_name = "cate0"
@@ -12,7 +12,7 @@ default_description = "Category 0 description"
 
 def test_create_category_success(client):
     request_body = {"name": default_name, "description": default_description}
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     headers = generate_auth_headers(user.id)
     response = client.post("/categories", json=request_body, headers=headers)
     assert response.status_code == 200
@@ -23,7 +23,7 @@ def test_create_category_success(client):
 
 
 def test_create_category_invalid_body(client):
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     headers = generate_auth_headers(user.id)
     # missing req body
     response = client.post("/categories", headers=headers)
@@ -64,7 +64,7 @@ def test_create_category_invalid_body(client):
 
 
 def test_create_category_duplicate_name(client):
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     headers = generate_auth_headers(user.id)
     client.post(
         "/categories",
@@ -81,7 +81,7 @@ def test_create_category_duplicate_name(client):
 
 
 def test_get_list_category_success(client):
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     init_category(user_id=user.id, number_of_cate=30)
     headers = generate_auth_headers(user_id=user.id)
 
@@ -113,7 +113,7 @@ def test_get_list_category_success(client):
 
 
 def test_get_list_category_invalid_params(client):
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     init_category(user_id=user.id, number_of_cate=30)
     headers = generate_auth_headers(user_id=user.id)
 
@@ -127,7 +127,7 @@ def test_get_list_category_invalid_params(client):
 
 
 def test_get_one_category_success(client):
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     headers = generate_auth_headers(user_id=user.id)
 
@@ -139,8 +139,8 @@ def test_get_one_category_success(client):
     assert response.json["user_id"] == category.user_id
 
 
-def test_get_one_category_notfound(client):
-    user = init_user(1)[0]
+def test_get_one_category_not_found(client):
+    user = init_users(number_of_user=1)[0]
     headers = generate_auth_headers(user_id=user.id)
 
     response = client.get("/categories/1", headers=headers)
@@ -149,7 +149,7 @@ def test_get_one_category_notfound(client):
 
 
 def test_delete_category_success(client):
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     init_item(user_id=user.id, category_id=category.id, number_of_item=30)
     headers = generate_auth_headers(user_id=user.id)
@@ -160,7 +160,7 @@ def test_delete_category_success(client):
 
 
 def test_delete_category_notfound(client):
-    user = init_user(1)[0]
+    user = init_users(number_of_user=1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     headers = generate_auth_headers(user_id=user.id)
 
@@ -170,7 +170,7 @@ def test_delete_category_notfound(client):
 
 
 def test_delete_category_forbidden(client):
-    users = init_user(2)
+    users = init_users(2)
     user_id_create = users[0].id
     user_id_delete = users[1].id
     category = init_category(user_id=user_id_create, number_of_cate=1)[0]

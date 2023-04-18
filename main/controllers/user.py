@@ -29,9 +29,10 @@ def signup():
 @validate_body(PlainUserSchema)
 def login():
     request_data = request.get_json()
+    # check here
     user: UserModel = UserModel.query.filter(
         UserModel.email == request_data["email"]
-    ).first()
+    ).one_or_none()
 
     if not user or not check_password(request_data["password"], user.hashed_password):
         raise Unauthorized(error_message="Email or password is incorrect")

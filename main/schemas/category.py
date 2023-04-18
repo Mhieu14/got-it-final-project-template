@@ -1,4 +1,6 @@
-from marshmallow import ValidationError, fields, post_load, validates
+from marshmallow import fields, post_load, validate
+
+from main.constants import DESCRIPTION_MAX_LENGTH, NAME_MAX_LENGTH
 
 from .base import BaseSchema
 
@@ -6,25 +8,13 @@ from .base import BaseSchema
 class PlainCategorySchema(BaseSchema):
     id = fields.Integer(dump_only=True)
     user_id = fields.Integer(dump_only=True)
-    name = fields.Str(required=True)
-    description = fields.Str(required=True)
-    # created_at = fields.DateTime(dump_only=True)
-    # updated_at = fields.DateTime(dump_only=True)
+    name = fields.Str(required=True, validate=validate.Length(max=NAME_MAX_LENGTH))
+    description = fields.Str(
+        required=True, validate=validate.Length(max=DESCRIPTION_MAX_LENGTH)
+    )
 
     @post_load
-    def post_load_category(self, cate, many, **kwargs):
-        cate["name"] = cate["name"].strip()
-        cate["description"] = cate["description"].strip()
-        return cate
-
-
-class CreateCategorySchema(PlainCategorySchema):
-    @validates("name")
-    def validate_name(self, data, **kwargs):
-        if len(data) > 255:
-            raise ValidationError("Name must have less than 255 characters")
-
-    @validates("description")
-    def validate_description(self, data, **kwargs):
-        if len(data) > 5000:
-            raise ValidationError("Description must have less than 5000 characters")
+    def post_load_category(self, category, many, **kwargs):
+        category["name"] = category["name"].strip()
+        category["description"] = category["description"].strip()
+        return category

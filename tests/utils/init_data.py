@@ -7,7 +7,7 @@ from main.models.item import ItemModel
 from main.models.user import UserModel
 
 
-def init_user(number_of_user=2):
+def init_users(number_of_user=2):
     users = []
     for i in range(number_of_user):
         email = f"email{i}@email.com"
@@ -55,4 +55,4 @@ def init_item(user_id, category_id, number_of_item=10):
 
 
 def count_items_in_category(category_id):
-    return ItemModel.query.filter(ItemModel.category_id == int(category_id)).count()
+    return ItemModel.query.filter(ItemModel.category_id == category_id).count()

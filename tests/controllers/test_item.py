@@ -2,7 +2,7 @@ from tests.utils.init_data import (
     generate_auth_headers,
     init_category,
     init_item,
-    init_user,
+    init_users,
 )
 
 default_name = "item default_name"
@@ -10,7 +10,7 @@ default_description = "item default_description"
 
 
 def test_create_item_success(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     headers = generate_auth_headers(user.id)
     request_body = {"name": default_name, "description": default_description}
@@ -26,7 +26,7 @@ def test_create_item_success(client):
 
 
 def test_create_item_notfound_category(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     headers = generate_auth_headers(user.id)
     request_body = {"name": default_name, "description": default_description}
@@ -38,7 +38,7 @@ def test_create_item_notfound_category(client):
 
 
 def test_create_item_invalid_body(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     headers = generate_auth_headers(user.id)
     # missing req body
@@ -84,7 +84,7 @@ def test_create_item_invalid_body(client):
 
 
 def test_create_item_duplicate_name(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     headers = generate_auth_headers(user.id)
     client.post(
@@ -102,7 +102,7 @@ def test_create_item_duplicate_name(client):
 
 
 def test_get_list_item_success(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     init_item(user_id=user.id, category_id=category.id, number_of_item=30)
     headers = generate_auth_headers(user.id)
@@ -111,11 +111,11 @@ def test_get_list_item_success(client):
     assert response.status_code == 200
     assert "items" in response.json
     assert "pagination" in response.json
-    first = response.json["items"][0]
-    assert "id" in first
-    assert "name" in first
-    assert "description" not in first
-    assert "user_id" in first
+    first_item = response.json["items"][0]
+    assert "id" in first_item
+    assert "name" in first_item
+    assert "description" not in first_item
+    assert "user_id" in first_item
     assert len(response.json["items"]) == 20
     assert response.json["pagination"]["total"] == 30
     assert response.json["pagination"]["offset"] == 0
@@ -134,8 +134,8 @@ def test_get_list_item_success(client):
     assert response.json["pagination"]["limit"] == 10
 
 
-def test_get_list_item_notfound_category(client):
-    user = init_user(1)[0]
+def test_get_list_item_not_found_category(client):
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     init_item(user_id=user.id, category_id=category.id, number_of_item=10)
     headers = generate_auth_headers(user.id)
@@ -146,7 +146,7 @@ def test_get_list_item_notfound_category(client):
 
 
 def test_get_one_item_success(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
     headers = generate_auth_headers(user.id)
@@ -161,7 +161,7 @@ def test_get_one_item_success(client):
 
 
 def test_get_one_item_notfound(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
     headers = generate_auth_headers(user_id=user.id)
@@ -182,7 +182,7 @@ def test_get_one_item_notfound(client):
 
 
 def test_delete_item_success(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
     headers = generate_auth_headers(user_id=user.id)
@@ -194,7 +194,7 @@ def test_delete_item_success(client):
 
 
 def test_delete_item_notfound(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
     headers = generate_auth_headers(user_id=user.id)
@@ -215,7 +215,7 @@ def test_delete_item_notfound(client):
 
 
 def test_delete_item_forbidden(client):
-    users = init_user(2)
+    users = init_users(2)
     user_id_create = users[0].id
     user_id_delete = users[1].id
     category = init_category(user_id=user_id_create, number_of_cate=1)[0]
@@ -232,7 +232,7 @@ def test_delete_item_forbidden(client):
 
 
 def test_update_item_success(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
     headers = generate_auth_headers(user_id=user.id)
@@ -251,7 +251,7 @@ def test_update_item_success(client):
 
 
 def test_update_item_notfound(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     item = init_item(user_id=user.id, category_id=category.id, number_of_item=1)[0]
     headers = generate_auth_headers(user_id=user.id)
@@ -276,7 +276,7 @@ def test_update_item_notfound(client):
 
 
 def test_update_item_forbidden(client):
-    users = init_user(2)
+    users = init_users(2)
     user_id_create = users[0].id
     user_id_delete = users[1].id
     category = init_category(user_id=user_id_create, number_of_cate=1)[0]
@@ -295,7 +295,7 @@ def test_update_item_forbidden(client):
 
 
 def test_update_item_duplicate_name(client):
-    user = init_user(1)[0]
+    user = init_users(1)[0]
     category = init_category(user_id=user.id, number_of_cate=1)[0]
     items = init_item(user_id=user.id, category_id=category.id, number_of_item=2)
     headers = generate_auth_headers(user.id)

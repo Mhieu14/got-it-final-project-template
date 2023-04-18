@@ -7,12 +7,12 @@ from main.commons.decorators import validate_body
 from main.commons.exceptions import BadRequest, Forbidden
 from main.commons.utils import get_pagination_params
 from main.models.category import CategoryModel
-from main.schemas.category import CreateCategorySchema, PlainCategorySchema
+from main.schemas.category import PlainCategorySchema
 
 
 @app.post("/categories")
 @jwt_required()
-@validate_body(CreateCategorySchema)
+@validate_body(PlainCategorySchema)
 def create_category():
     request_data = request.get_json()
     current_user_id = get_jwt_identity()
@@ -26,8 +26,7 @@ def create_category():
 
 
 @app.get("/categories")
-@jwt_required()
-def get_list_categories():
+def get_categories():
     offset, limit = get_pagination_params(request_args=request.args)
     categories = (
         CategoryModel.query.limit(limit)
@@ -41,19 +40,18 @@ def get_list_categories():
     )
     total = CategoryModel.query.count()
     return {
-        "categories": [PlainCategorySchema().dump(category) for category in categories],
+        "categories": PlainCategorySchema(many=True).dump(categories),
         "pagination": {"offset": offset, "limit": limit, "total": total},
     }
 
 
-@app.get("/categories/<string:category_id>")
-@jwt_required()
-def get_detail_category(category_id):
-    category = CategoryModel.query.get_or_404(int(category_id))
+@app.get("/categories/<int:category_id>")
+def get_category(category_id):
+    category = CategoryModel.query.get_or_404(category_id)
     return PlainCategorySchema().dump(category)
 
 
-@app.delete("/categories/<string:category_id>")
+@app.delete("/categories/<int:category_id>")
 @jwt_required()
 def delete_category(category_id):
     category = CategoryModel.query.get_or_404(category_id)
@@ -61,4 +59,4 @@ def delete_category(category_id):
         raise Forbidden(error_message="User has no right to delete this category")
     db.session.delete(category)
     db.session.commit()
-    return ""
+    return {}

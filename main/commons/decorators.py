@@ -1,3 +1,5 @@
+from functools import wraps
+
 from flask import request
 from marshmallow import ValidationError
 
@@ -6,22 +8,22 @@ from main.commons.exceptions import BadRequest, _ErrorCode
 
 def validate_body(schema):
     def validate(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 request_data = request.get_json()
                 schema().load(request_data)
-            except ValidationError as err:
-                raise BadRequest(
-                    error_message=err.messages, error_code=_ErrorCode.VALIDATION_ERROR
-                )
-            except Exception:
+            except Exception as err:
+                print(err)
                 raise BadRequest(
                     error_message="Invalid request body",
+                    error_data=err.messages
+                    if isinstance(err, ValidationError)
+                    else None,
                     error_code=_ErrorCode.VALIDATION_ERROR,
                 )
             return func(*args, **kwargs)
 
-        wrapper.__name__ = func.__name__
         return wrapper
 
     return validate

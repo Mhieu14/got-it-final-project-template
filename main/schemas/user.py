@@ -1,16 +1,25 @@
 import re
 
-from marshmallow import ValidationError, fields, post_load, validates
+from marshmallow import ValidationError, fields, post_load, validate, validates
+
+from main.constants import EMAIL_MAX_LENGTH, PASSWORD_MIN_LENGTH
 
 from .base import BaseSchema
+
+# (?=.*[a-z]) - at least one lower case letter exists
+# (?=.*[A-Z]) - at least one upper case letter exists
+# (?=.*\d) - at least one digit exists
+password_pattern = re.compile("(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])")
 
 
 class PlainUserSchema(BaseSchema):
     id = fields.Integer(dump_only=True)
-    email = fields.Email(required=True)
-    password = fields.Str(required=True, load_only=True)
-    # created_at = fields.DateTime(dump_only=True)
-    # updated_at = fields.DateTime(dump_only=True)
+    email = fields.Email(required=True, validate=validate.Length(max=EMAIL_MAX_LENGTH))
+    password = fields.Str(
+        required=True,
+        load_only=True,
+        validate=validate.Length(min=PASSWORD_MIN_LENGTH),
+    )
 
     @post_load
     def post_load_user(self, item, many, **kwargs):
@@ -19,21 +28,9 @@ class PlainUserSchema(BaseSchema):
 
 
 class UserSignupSchema(PlainUserSchema):
-    @validates("email")
-    def validate_email(self, data, **kwargs):
-        if len(data) > 255:
-            raise ValidationError("Email must have less than 255 characters")
-
     @validates("password")
-    def validate_password(self, data, **kwargs):
-        if len(data) < 6:
-            raise ValidationError("Passwords must have at least 6 characters")
-
-        # (?=.*[a-z]) - at least one lower case letter exists
-        # (?=.*[A-Z]) - at least one upper case letter exists
-        # (?=.*\d) - at least one digit exists
-        pattern = re.compile("(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])")
-        if not pattern.match(data):
+    def validate_password(self, data, **__):
+        if not password_pattern.match(data):
             raise ValidationError(
                 "Passwords must include at least one lowercase letter, "
                 "one uppercase letter, one digit"

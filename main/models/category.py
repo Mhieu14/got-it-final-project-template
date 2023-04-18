@@ -7,7 +7,10 @@ class CategoryModel(BaseModel):
     __tablename__ = "categories"
 
     name = db.Column(db.String(255), unique=True, nullable=False)
-    description = db.Column(db.String(5000))
+    description = db.Column(db.String(5000), nullable=False)
     user_id = db.Column(
-        db.Integer, db.ForeignKey("users.id"), unique=False, nullable=False
+        db.Integer,
+        db.ForeignKey("users.id"),
+        unique=False,
+        nullable=False,
     )
