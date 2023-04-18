@@ -6,6 +6,7 @@ from main import app, db
 from main.commons.decorators import validate_body
 from main.commons.exceptions import BadRequest, Forbidden
 from main.commons.utils import get_pagination_params
+from main.engines.auth import token_required
 from main.models.category import CategoryModel
 from main.schemas.category import PlainCategorySchema
 
@@ -26,7 +27,9 @@ def create_category():
 
 
 @app.get("/categories")
-def get_categories():
+@token_required
+def get_categories(user_id):
+    print("USER_ID", user_id)
     offset, limit = get_pagination_params(request_args=request.args)
     categories = (
         CategoryModel.query.limit(limit)
