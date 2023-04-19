@@ -3,7 +3,6 @@ from importlib import import_module
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
@@ -20,13 +19,6 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 CORS(app)
-
-jwt = JWTManager(app)
-
-
-@jwt.invalid_token_loader
-def invalid_token_callback(message):
-    return Unauthorized(error_message=f"Invalid token: {message}").to_response()
 
 
 def register_subpackages():
