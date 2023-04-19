@@ -1,7 +1,6 @@
-from flask_jwt_extended import create_access_token
-
 import main.engines.user as user_engine
 from main import db
+from main.libs.jwt import generate_jwt_token
 from main.models.category import CategoryModel
 from main.models.item import ItemModel
 
@@ -22,7 +21,7 @@ def create_user():
 
 
 def generate_auth_headers(user_id):
-    token = create_access_token(identity=user_id, fresh=True)
+    token = generate_jwt_token(user_id)
     return {"Authorization": f"Bearer {token}"}
 
 

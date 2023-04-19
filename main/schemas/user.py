@@ -14,7 +14,10 @@ password_pattern = re.compile(r"(?=.*\d)(?=.*[a-z])(?=.*[A-Z])")
 
 class PlainUserSchema(BaseSchema):
     id = fields.Integer(dump_only=True)
-    email = fields.Email(required=True, validate=validate.Length(max=EMAIL_MAX_LENGTH))
+    email = fields.Email(
+        required=True,
+        validate=validate.Length(max=EMAIL_MAX_LENGTH),
+    )
     password = fields.Str(
         required=True,
         load_only=True,

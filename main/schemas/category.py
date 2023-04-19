@@ -8,7 +8,11 @@ from .base import BaseSchema, TrimmedStr
 class PlainCategorySchema(BaseSchema):
     id = fields.Integer(dump_only=True)
     user_id = fields.Integer(dump_only=True)
-    name = TrimmedStr(required=True, validate=validate.Length(max=NAME_MAX_LENGTH))
+    name = TrimmedStr(
+        required=True,
+        validate=validate.Length(max=NAME_MAX_LENGTH),
+    )
     description = TrimmedStr(
-        required=True, validate=validate.Length(max=DESCRIPTION_MAX_LENGTH)
+        required=True,
+        validate=validate.Length(max=DESCRIPTION_MAX_LENGTH),
     )
