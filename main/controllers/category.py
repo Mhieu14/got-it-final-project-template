@@ -1,23 +1,18 @@
-from flask import request
-from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.exc import IntegrityError
 
 from main import app, db
-from main.commons.decorators import validate_body
+from main.commons.decorators import token_required, validate_request
 from main.commons.exceptions import BadRequest, Forbidden
-from main.commons.utils import get_pagination_params
-from main.engines.auth import token_required
 from main.models.category import CategoryModel
 from main.schemas.category import PlainCategorySchema
+from main.schemas.pagination import PaginationQuerySchema
 
 
 @app.post("/categories")
-@jwt_required()
-@validate_body(PlainCategorySchema)
-def create_category():
-    request_data = request.get_json()
-    current_user_id = get_jwt_identity()
-    category = CategoryModel(**request_data, user_id=current_user_id)
+@token_required
+@validate_request(body_schema=PlainCategorySchema)
+def create_category(user_id, request_body):
+    category = CategoryModel(**request_body, user_id=user_id)
     try:
         db.session.add(category)
         db.session.commit()
@@ -27,10 +22,10 @@ def create_category():
 
 
 @app.get("/categories")
-@token_required
-def get_categories(user_id):
-    print("USER_ID", user_id)
-    offset, limit = get_pagination_params(request_args=request.args)
+@validate_request(query_schema=PaginationQuerySchema)
+def get_categories(request_query):
+    offset = request_query["offset"]
+    limit = request_query["limit"]
     categories = (
         CategoryModel.query.limit(limit)
         .offset(offset)
@@ -55,10 +50,10 @@ def get_category(category_id):
 
 
 @app.delete("/categories/<int:category_id>")
-@jwt_required()
-def delete_category(category_id):
+@token_required
+def delete_category(user_id, category_id):
     category = CategoryModel.query.get_or_404(category_id)
-    if category.user_id != get_jwt_identity():
+    if category.user_id != user_id:
         raise Forbidden(error_message="User has no right to delete this category")
     db.session.delete(category)
     db.session.commit()

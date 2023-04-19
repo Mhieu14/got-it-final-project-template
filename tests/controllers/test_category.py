@@ -80,11 +80,11 @@ def test_get_list_category_success(client):
     assert response.status_code == 200
     assert "categories" in response.json
     assert "pagination" in response.json
-    first = response.json["categories"][0]
-    assert "id" in first
-    assert "name" in first
-    assert "description" not in first
-    assert "user_id" in first
+    first_category = response.json["categories"][0]
+    assert "id" in first_category
+    assert "name" in first_category
+    assert "description" not in first_category
+    assert "user_id" in first_category
     assert len(response.json["categories"]) == LIMIT_DEFAULT
     assert response.json["pagination"]["total"] == number_of_categories
     assert response.json["pagination"]["offset"] == OFFSET_DEFAULT

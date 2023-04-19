@@ -1,24 +1,20 @@
-from flask import request
-from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.exc import IntegrityError
 
 from main import app, db
-from main.commons.decorators import validate_body
+from main.commons.decorators import token_required, validate_request
 from main.commons.exceptions import BadRequest, Forbidden, NotFound
-from main.commons.utils import get_pagination_params
 from main.models.category import CategoryModel
 from main.models.item import ItemModel
 from main.schemas.item import PlainItemSchema
+from main.schemas.pagination import PaginationQuerySchema
 
 
 @app.post("/categories/<int:category_id>/items")
-@jwt_required()
-@validate_body(PlainItemSchema)
-def create_item(category_id):
-    request_data = request.get_json()
-    current_user_id = get_jwt_identity()
+@token_required
+@validate_request(body_schema=PlainItemSchema)
+def create_item(user_id, category_id, request_body):
     CategoryModel.query.get_or_404(category_id)
-    item = ItemModel(**request_data, user_id=current_user_id, category_id=category_id)
+    item = ItemModel(**request_body, user_id=user_id, category_id=category_id)
     try:
         db.session.add(item)
         db.session.commit()
@@ -28,8 +24,10 @@ def create_item(category_id):
 
 
 @app.get("/categories/<int:category_id>/items")
-def get_items(category_id):
-    offset, limit = get_pagination_params(request_args=request.args)
+@validate_request(query_schema=PaginationQuerySchema)
+def get_items(category_id, request_query):
+    offset = request_query["offset"]
+    limit = request_query["limit"]
     CategoryModel.query.get_or_404(category_id)
     query = ItemModel.query.filter(ItemModel.category_id == category_id)
     items = (
@@ -53,7 +51,7 @@ def get_one_item(category_id, item_id):
     item = (
         ItemModel.query.filter(ItemModel.id == item_id)
         .filter(ItemModel.category_id == category_id)
-        .first()
+        .one_or_none()
     )
     if item is None:
         raise NotFound(error_message="Item not found")
@@ -67,10 +65,10 @@ def get_item(category_id, item_id):
 
 
 @app.delete("/categories/<int:category_id>/items/<int:item_id>")
-@jwt_required()
-def delete_item(category_id, item_id):
+@token_required
+def delete_item(user_id, category_id, item_id):
     item = get_one_item(category_id, item_id)
-    if item.user_id != get_jwt_identity():
+    if item.user_id != user_id:
         raise Forbidden(error_message="User has no right to delete this item")
     db.session.delete(item)
     db.session.commit()
@@ -78,15 +76,14 @@ def delete_item(category_id, item_id):
 
 
 @app.put("/categories/<int:category_id>/items/<int:item_id>")
-@jwt_required()
-@validate_body(PlainItemSchema)
-def update_item(category_id, item_id):
-    request_data = request.get_json()
+@token_required
+@validate_request(body_schema=PlainItemSchema)
+def update_item(user_id, category_id, item_id, request_body):
     item = get_one_item(category_id, item_id)
-    if item.user_id != get_jwt_identity():
+    if item.user_id != user_id:
         raise Forbidden(error_message="User has no right to delete this item")
-    item.name = request_data["name"]
-    item.description = request_data["description"]
+    item.name = request_body["name"]
+    item.description = request_body["description"]
     try:
         db.session.add(item)
         db.session.commit()
