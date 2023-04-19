@@ -7,8 +7,15 @@ from .base import BaseModel
 class ItemModel(BaseModel):
     __tablename__ = "items"
 
-    name = db.Column(db.String(NAME_MAX_LENGTH), unique=True, nullable=False)
-    description = db.Column(db.String(DESCRIPTION_MAX_LENGTH), nullable=False)
+    name = db.Column(
+        db.String(NAME_MAX_LENGTH),
+        unique=True,
+        nullable=False,
+    )
+    description = db.Column(
+        db.String(DESCRIPTION_MAX_LENGTH),
+        nullable=False,
+    )
     category_id = db.Column(
         db.Integer,
         db.ForeignKey("categories.id", ondelete="CASCADE"),
