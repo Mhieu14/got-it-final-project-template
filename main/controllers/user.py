@@ -1,5 +1,3 @@
-from flask_jwt_extended import create_access_token
-
 from main import app
 from main.commons.decorators import validate_request
 from main.commons.exceptions import Unauthorized
@@ -13,7 +11,7 @@ from main.schemas.user import PlainUserSchema, UserSignupSchema
 @validate_request(body_schema=UserSignupSchema)
 def signup(request_body):
     user = create_user(request_body)
-    access_token = create_access_token(identity=user.id, fresh=True)
+    access_token = generate_jwt_token(user.id)
     return {"token": access_token, "user": PlainUserSchema().dump(user)}
 
 
