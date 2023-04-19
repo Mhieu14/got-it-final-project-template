@@ -1,9 +1,7 @@
-from sqlalchemy.exc import IntegrityError
-
-from main import app, db
+import main.engines.category as engine
+from main import app
 from main.commons.decorators import token_required, validate_request
-from main.commons.exceptions import BadRequest, Forbidden
-from main.models.category import CategoryModel
+from main.commons.exceptions import Forbidden
 from main.schemas.category import PlainCategorySchema
 from main.schemas.pagination import PaginationQuerySchema
 
@@ -12,12 +10,7 @@ from main.schemas.pagination import PaginationQuerySchema
 @token_required
 @validate_request(body_schema=PlainCategorySchema)
 def create_category(user_id, request_body):
-    category = CategoryModel(**request_body, user_id=user_id)
-    try:
-        db.session.add(category)
-        db.session.commit()
-    except IntegrityError:
-        raise BadRequest(error_message="Category name already existed")
+    category = engine.create_category(user_id, request_body)
     return PlainCategorySchema().dump(category)
 
 
@@ -26,17 +19,8 @@ def create_category(user_id, request_body):
 def get_categories(request_query):
     offset = request_query["offset"]
     limit = request_query["limit"]
-    categories = (
-        CategoryModel.query.limit(limit)
-        .offset(offset)
-        .with_entities(
-            CategoryModel.id,
-            CategoryModel.name,
-            CategoryModel.user_id,
-        )
-        .all()
-    )
-    total = CategoryModel.query.count()
+    categories = engine.get_categories(offset, limit)
+    total = engine.count_categories()
     return {
         "categories": PlainCategorySchema(many=True).dump(categories),
         "pagination": {"offset": offset, "limit": limit, "total": total},
@@ -45,16 +29,15 @@ def get_categories(request_query):
 
 @app.get("/categories/<int:category_id>")
 def get_category(category_id):
-    category = CategoryModel.query.get_or_404(category_id)
+    category = engine.get_category(category_id)
     return PlainCategorySchema().dump(category)
 
 
 @app.delete("/categories/<int:category_id>")
 @token_required
 def delete_category(user_id, category_id):
-    category = CategoryModel.query.get_or_404(category_id)
+    category = engine.get_category(category_id)
     if category.user_id != user_id:
         raise Forbidden(error_message="User has no right to delete this category")
-    db.session.delete(category)
-    db.session.commit()
+    engine.delete_category(category)
     return {}

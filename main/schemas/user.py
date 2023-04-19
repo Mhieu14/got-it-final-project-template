@@ -9,7 +9,7 @@ from .base import BaseSchema
 # (?=.*[a-z]) - at least one lower case letter exists
 # (?=.*[A-Z]) - at least one upper case letter exists
 # (?=.*\d) - at least one digit exists
-password_pattern = re.compile("(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])")
+password_pattern = re.compile(r"(?=.*\d)(?=.*[a-z])(?=.*[A-Z])")
 
 
 class PlainUserSchema(BaseSchema):

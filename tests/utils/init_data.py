@@ -1,20 +1,17 @@
 from flask_jwt_extended import create_access_token
 
+import main.engines.user as user_engine
 from main import db
-from main.commons.utils import hash_password
 from main.models.category import CategoryModel
 from main.models.item import ItemModel
-from main.models.user import UserModel
 
 
 def create_users(number_of_users):
     users = []
     for i in range(number_of_users):
-        email = f"email{i}@email.com"
-        password = "passwordA1"
-        hashed_password = hash_password(password)
-        user = UserModel(email=email, hashed_password=hashed_password)
-        db.session.add(user)
+        user = user_engine.create_user(
+            {"email": f"email{i}@email.com", "password": "passwordA1"}
+        )
         users.append(user)
     db.session.commit()
     return users
