@@ -1,18 +1,17 @@
-from sqlalchemy.exc import IntegrityError
-
 from main import db
-from main.commons.exceptions import BadRequest, NotFound
 from main.models.item import ItemModel
-from main.schemas.item import PlainItemSchema
+from main.schemas.item import ItemSchema
 
 
-def create_item(user_id, category_id, request_body):
-    item = ItemModel(**request_body, user_id=user_id, category_id=category_id)
-    try:
-        db.session.add(item)
-        db.session.commit()
-    except IntegrityError:
-        raise BadRequest(error_message="Item name already existed")
+def create_item(user_id, category_id, name, description):
+    item = ItemModel(
+        name=name,
+        description=description,
+        user_id=user_id,
+        category_id=category_id,
+    )
+    db.session.add(item)
+    db.session.commit()
     return item
 
 
@@ -41,8 +40,6 @@ def get_item(category_id, item_id):
         .filter(ItemModel.category_id == category_id)
         .one_or_none()
     )
-    if item is None:
-        raise NotFound(error_message="Item not found")
     return item
 
 
@@ -52,9 +49,6 @@ def delete_item(item):
 
 
 def update_item(item):
-    try:
-        db.session.add(item)
-        db.session.commit()
-    except IntegrityError:
-        raise BadRequest(error_message="Item name already existed")
-    return PlainItemSchema().dump(item)
+    db.session.add(item)
+    db.session.commit()
+    return ItemSchema().dump(item)

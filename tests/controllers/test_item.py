@@ -111,29 +111,34 @@ def test_get_list_item_success(client):
     assert "description" not in first_item
     assert "user_id" in first_item
     assert len(response.json["items"]) == LIMIT_DEFAULT
-    assert response.json["pagination"]["total"] == number_of_items
-    assert response.json["pagination"]["offset"] == OFFSET_DEFAULT
-    assert response.json["pagination"]["limit"] == LIMIT_DEFAULT
+    pagination = response.json["pagination"]
+    assert pagination["total"] == number_of_items
+    assert pagination["offset"] == OFFSET_DEFAULT
+    assert pagination["limit"] == LIMIT_DEFAULT
 
+    offset = 20
     response = client.get(
         f"/categories/{category.id}/items",
-        query_string={"offset": 20},
+        query_string={"offset": offset},
         headers=headers,
     )
-    assert len(response.json["items"]) == number_of_items - 20
-    assert response.json["pagination"]["total"] == number_of_items
-    assert response.json["pagination"]["offset"] == 20
-    assert response.json["pagination"]["limit"] == LIMIT_DEFAULT
+    assert len(response.json["items"]) == number_of_items - offset
+    pagination = response.json["pagination"]
+    assert pagination["total"] == number_of_items
+    assert pagination["offset"] == offset
+    assert pagination["limit"] == LIMIT_DEFAULT
 
+    limit = 10
     response = client.get(
         f"/categories/{category.id}/items",
-        query_string={"limit": 10},
+        query_string={"limit": limit},
         headers=headers,
     )
-    assert len(response.json["items"]) == 10
-    assert response.json["pagination"]["total"] == number_of_items
-    assert response.json["pagination"]["offset"] == OFFSET_DEFAULT
-    assert response.json["pagination"]["limit"] == 10
+    assert len(response.json["items"]) == limit
+    pagination = response.json["pagination"]
+    assert pagination["total"] == number_of_items
+    assert pagination["offset"] == OFFSET_DEFAULT
+    assert pagination["limit"] == limit
 
 
 def test_get_list_item_not_found_category(client):

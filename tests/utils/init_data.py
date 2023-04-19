@@ -9,10 +9,11 @@ def create_users(number_of_users):
     users = []
     for i in range(number_of_users):
         user = user_engine.create_user(
-            {"email": f"email{i}@email.com", "password": "passwordA1"}
+            email=f"email{i}@email.com",
+            password="passwordA1",
         )
         users.append(user)
-    db.session.commit()
+        db.session.commit()
     return users
 
 

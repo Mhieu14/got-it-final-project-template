@@ -89,21 +89,28 @@ def test_get_list_category_success(client):
     assert "description" not in first_category
     assert "user_id" in first_category
     assert len(response.json["categories"]) == LIMIT_DEFAULT
-    assert response.json["pagination"]["total"] == number_of_categories
-    assert response.json["pagination"]["offset"] == OFFSET_DEFAULT
-    assert response.json["pagination"]["limit"] == LIMIT_DEFAULT
+    pagination = response.json["pagination"]
+    assert pagination["total"] == number_of_categories
+    assert pagination["offset"] == OFFSET_DEFAULT
+    assert pagination["limit"] == LIMIT_DEFAULT
 
-    response = client.get("/categories", query_string={"offset": 20}, headers=headers)
-    assert len(response.json["categories"]) == number_of_categories - 20
-    assert response.json["pagination"]["total"] == number_of_categories
-    assert response.json["pagination"]["offset"] == 20
-    assert response.json["pagination"]["limit"] == LIMIT_DEFAULT
+    offset = 20
+    response = client.get(
+        "/categories", query_string={"offset": offset}, headers=headers
+    )
+    pagination = response.json["pagination"]
+    assert len(response.json["categories"]) == number_of_categories - offset
+    assert pagination["total"] == number_of_categories
+    assert pagination["offset"] == offset
+    assert pagination["limit"] == LIMIT_DEFAULT
 
-    response = client.get("/categories", query_string={"limit": 10}, headers=headers)
-    assert len(response.json["categories"]) == 10
-    assert response.json["pagination"]["total"] == number_of_categories
-    assert response.json["pagination"]["offset"] == OFFSET_DEFAULT
-    assert response.json["pagination"]["limit"] == 10
+    limit = 10
+    response = client.get("/categories", query_string={"limit": limit}, headers=headers)
+    pagination = response.json["pagination"]
+    assert len(response.json["categories"]) == limit
+    assert pagination["total"] == number_of_categories
+    assert pagination["offset"] == OFFSET_DEFAULT
+    assert pagination["limit"] == limit
 
 
 @pytest.mark.parametrize(

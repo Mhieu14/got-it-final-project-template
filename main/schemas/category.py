@@ -5,7 +5,7 @@ from main.constants import DESCRIPTION_MAX_LENGTH, NAME_MAX_LENGTH
 from .base import BaseSchema, TrimmedStr
 
 
-class PlainCategorySchema(BaseSchema):
+class CategorySchema(BaseSchema):
     id = fields.Integer(dump_only=True)
     user_id = fields.Integer(dump_only=True)
     name = TrimmedStr(

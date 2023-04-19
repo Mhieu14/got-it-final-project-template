@@ -67,7 +67,7 @@ def token_required(func):
 
         authorization_header = request.headers["Authorization"]
         if authorization_header.startswith("Bearer "):
-            [_, token] = authorization_header.split()
+            _, token = authorization_header.split(maxsplit=1)
             user_id = validate_jwt_token(token)
         else:
             raise Unauthorized(error_message="Invalid token type")
