@@ -1,6 +1,6 @@
 import re
 
-from marshmallow import ValidationError, fields, post_load, validate, validates
+from marshmallow import ValidationError, fields, validate, validates
 
 from main.constants import EMAIL_MAX_LENGTH, PASSWORD_MIN_LENGTH
 
@@ -20,11 +20,6 @@ class PlainUserSchema(BaseSchema):
         load_only=True,
         validate=validate.Length(min=PASSWORD_MIN_LENGTH),
     )
-
-    @post_load
-    def post_load_user(self, item, many, **kwargs):
-        item["email"] = item["email"].lower().strip()
-        return item
 
 
 class UserSignupSchema(PlainUserSchema):

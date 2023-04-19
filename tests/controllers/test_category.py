@@ -23,7 +23,10 @@ default_description = "category default_description"
 
 
 def test_create_category_success(client):
-    request_body = {"name": default_name, "description": default_description}
+    request_body = {
+        "name": f"{' ' * 5}{default_name}{' ' * 5}",
+        "description": f"{' ' * 5}{default_description}{' ' * 5}",
+    }
     user = create_user()
     headers = generate_auth_headers(user.id)
     response = client.post("/categories", json=request_body, headers=headers)

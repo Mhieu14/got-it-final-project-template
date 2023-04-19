@@ -25,7 +25,10 @@ def test_create_item_success(client):
     user = create_user()
     category = create_category(user_id=user.id)
     headers = generate_auth_headers(user.id)
-    request_body = {"name": default_name, "description": default_description}
+    request_body = {
+        "name": f"{' ' * 5}{default_name}{' ' * 5}",
+        "description": f"{' ' * 5}{default_description}{' ' * 5}",
+    }
     response = client.post(
         f"/categories/{category.id}/items", json=request_body, headers=headers
     )

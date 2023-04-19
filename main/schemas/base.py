@@ -14,3 +14,12 @@ class PaginationSchema(BaseSchema):
     items_per_page = fields.Integer()
     page = fields.Integer()
     total_items = fields.Integer()
+
+
+class TrimmedStr(fields.Str):
+    """String field which strips whitespace at the ends of the string."""
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        """Deserialize string value."""
+        value = super()._deserialize(value, attr, data, **kwargs)
+        return value.strip()
