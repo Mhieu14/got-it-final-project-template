@@ -13,3 +13,8 @@ class PlainItemSchema(BaseSchema):
     description = TrimmedStr(
         required=True, validate=validate.Length(max=DESCRIPTION_MAX_LENGTH)
     )
+
+
+class UpdateItemSchema(BaseSchema):
+    name = TrimmedStr(validate=validate.Length(max=NAME_MAX_LENGTH))
+    description = TrimmedStr(validate=validate.Length(max=DESCRIPTION_MAX_LENGTH))

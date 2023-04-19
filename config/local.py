@@ -5,4 +5,4 @@ class Config(BaseConfig):
     DEBUG = True
     TESTING = False
     JSONIFY_PRETTYPRINT_REGULAR = False
-    # SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = True

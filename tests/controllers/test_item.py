@@ -310,3 +310,30 @@ def test_update_item_duplicate_name(client):
     )
     assert response.status_code == 400
     assert response.json["error_code"] == BadRequest.error_code
+
+
+def test_update_item_missing_name_or_description(client):
+    user = create_user()
+    category = create_category(user_id=user.id)
+    item = create_item(user_id=user.id, category_id=category.id)
+    headers = generate_auth_headers(user_id=user.id)
+
+    response = client.put(
+        f"/categories/{category.id}/items/{item.id}",
+        json={"name": default_name},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert "id" in response.json
+    assert response.json["name"] == default_name
+    assert response.json["description"] == item.description
+
+    response = client.put(
+        f"/categories/{category.id}/items/{item.id}",
+        json={"description": default_description},
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert "id" in response.json
+    assert response.json["name"] == default_name
+    assert response.json["description"] == default_description

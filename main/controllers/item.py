@@ -3,7 +3,7 @@ from main import app
 from main.commons.decorators import token_required, validate_request
 from main.commons.exceptions import Forbidden
 from main.engines.category import get_category
-from main.schemas.item import PlainItemSchema
+from main.schemas.item import PlainItemSchema, UpdateItemSchema
 from main.schemas.pagination import PaginationQuerySchema
 
 
@@ -48,12 +48,14 @@ def api_delete_item(user_id, category_id, item_id):
 
 @app.put("/categories/<int:category_id>/items/<int:item_id>")
 @token_required
-@validate_request(body_schema=PlainItemSchema)
+@validate_request(body_schema=UpdateItemSchema)
 def api_update_item(user_id, category_id, item_id, request_body):
     item = engine.get_item(category_id, item_id)
     if item.user_id != user_id:
         raise Forbidden(error_message="User has no right to delete this item")
-    item.name = request_body["name"]
-    item.description = request_body["description"]
+    if "name" in request_body:
+        item.name = request_body["name"]
+    if "description" in request_body:
+        item.description = request_body["description"]
     engine.update_item(item)
     return PlainItemSchema().dump(item)
