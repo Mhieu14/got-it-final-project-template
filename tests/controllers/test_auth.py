@@ -39,6 +39,20 @@ def test_missing_bearer(client):
     assert response.status_code == 401
 
 
+def test_invalid_token(client):
+    headers = {"Authorization": "xxx.yyy.zzz"}
+    response = client.post("/categories", headers=headers)
+    assert response.status_code == 401
+
+    headers = {"Authorization": "Bearer xxx.yyy.zz"}
+    response = client.post("/categories", headers=headers)
+    assert response.status_code == 401
+
+    headers = {"Authorization": "Bearer xxx.yyy.zzz 12123"}
+    response = client.post("/categories", headers=headers)
+    assert response.status_code == 401
+
+
 def test_token_expired(client):
     user = create_user()
     token = jwt.encode(

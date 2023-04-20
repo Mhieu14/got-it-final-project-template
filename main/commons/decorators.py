@@ -1,6 +1,7 @@
 from functools import wraps
 
 from flask import request
+from jwt.exceptions import PyJWTError
 from marshmallow import ValidationError
 
 from main.commons.exceptions import BadRequest, Unauthorized, _ErrorCode
@@ -59,6 +60,14 @@ def validate_request(body_schema=None, query_schema=None):
     return validate
 
 
+def validate_bearer_header(authorization_header):
+    try:
+        _, token = authorization_header.split(maxsplit=1)
+        return validate_jwt_token(token)
+    except PyJWTError as err:
+        raise Unauthorized(error_message=f"Invalid JWT token: {err}")
+
+
 def token_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -67,8 +76,7 @@ def token_required(func):
 
         authorization_header = request.headers["Authorization"]
         if authorization_header.startswith("Bearer "):
-            _, token = authorization_header.split(maxsplit=1)
-            user_id = validate_jwt_token(token)
+            user_id = validate_bearer_header(authorization_header)
         else:
             raise Unauthorized(error_message="Invalid token type")
 
